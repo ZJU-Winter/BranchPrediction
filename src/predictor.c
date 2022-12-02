@@ -38,7 +38,11 @@ void init_gshare() {
 
 uint8_t make_prediction_gshare(uint32_t pc) {
     printf("Start of prediction_gshare\n");
-    uint32_t index = GHR ^ pc;
+    printf("GHR: %x\n", GHR);
+    printf("GHR: %x\n", pc);
+    uint32_t index = (GHR ^ pc);
+    printf("index: %x", index);
+
     if (gsharePatternTable[index] == SN || gsharePatternTable[index] == WN) {
         printf("End of prediction_gshare\n"); 
         return NOTTAKEN;
@@ -94,7 +98,6 @@ void init_predictor() {
     {
     case GSHARE:
         printf("Using Gshare predictor...\n");
-        printf("Hello\n");
         init_gshare();
         break;
     case TOURNAMENT:
