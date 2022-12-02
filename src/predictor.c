@@ -33,6 +33,7 @@ uint32_t pow2(int num) {
 
 void init_gshare() {
     printf("Start of init_gshare");
+    printf("before");
     predictor.GHR = NOTTAKEN;
     printf("HERE");
     predictor.patternTable = (uint32_t*) malloc(pow2(ghistoryBits) * sizeof(uint32_t));
