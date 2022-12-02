@@ -27,23 +27,23 @@ uint32_t pow2(int num) {
 }
 
 void init_gshare() {
-    printf("Start of init_gshare");
+    printf("Start of init_gshare\n");
     GHR = NOTTAKEN;
     gsharePatternTable = (uint32_t*) malloc(pow2(ghistoryBits) * sizeof(uint32_t));
     for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
         gsharePatternTable[i] = NOTTAKEN;
     }
-    printf("End of init_gshare");
+    printf("End of init_gshare\n");
 }
 
 uint8_t make_prediction_gshare(uint32_t pc) {
-    printf("Start of prediction_gshare");
+    printf("Start of prediction_gshare\n");
     uint32_t index = GHR ^ pc;
     if (gsharePatternTable[index] == SN || gsharePatternTable[index] == WN) {
-        printf("End of prediction_gshare"); 
+        printf("End of prediction_gshare\n"); 
         return NOTTAKEN;
     }
-    printf("End of prediction_gshare");
+    printf("End of prediction_gshare\n");
     return TAKEN;
 }
 
@@ -94,6 +94,7 @@ void init_predictor() {
     {
     case GSHARE:
         printf("Using Gshare predictor...\n");
+        printf("Hello\n");
         init_gshare();
         break;
     case TOURNAMENT:

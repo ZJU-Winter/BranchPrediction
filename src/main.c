@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 
     // Initialize the predictor
     init_predictor();
-
+    
     uint32_t num_branches = 0;
     uint32_t mispredictions = 0;
     uint32_t pc = 0;
