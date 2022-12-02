@@ -39,7 +39,7 @@ void init_gshare() {
 uint8_t make_prediction_gshare(uint32_t pc) {
     printf("Start of prediction_gshare\n");
     printf("GHR: %x\n", GHR);
-    printf("GHR: %x\n", pc);
+    printf("pc: %x\n", pc);
     uint32_t index = (GHR ^ pc);
     printf("index: %x", index);
 
