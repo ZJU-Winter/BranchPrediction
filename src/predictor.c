@@ -41,7 +41,7 @@ uint8_t make_prediction_gshare(uint32_t pc) {
     printf("GHR: %x\n", GHR);
     printf("pc: %x\n", pc);
     int index = 0;
-    printf("index: %x\n", GHR & pc);
+    printf("index: %x\n", GHR ^ pc);
 
     if (gsharePatternTable[index] == SN || gsharePatternTable[index] == WN) {
         printf("End of prediction_gshare\n"); 
