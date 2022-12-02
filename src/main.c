@@ -105,7 +105,9 @@ int main(int argc, char *argv[]) {
     uint8_t outcome = NOTTAKEN;
 
     // Reach each branch from the trace
+    printf("HERE!!");
     while (read_branch(&pc, &outcome)) {
+    printf("HERE2!!");
         num_branches++;
         // Make a prediction and compare with actual outcome
         uint8_t prediction = make_prediction(pc);
