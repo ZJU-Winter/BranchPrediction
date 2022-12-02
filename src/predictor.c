@@ -21,7 +21,7 @@ struct Predictor {
 
 };
 
-struct Predictor predictor;
+struct Predictor predictor = { NOTTAKEN, NULL};
 
 uint32_t pow2(int num) {
     uint32_t rst = 1;
