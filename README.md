@@ -1,20 +1,22 @@
 # CSE240A Branch Predictor Project
 
 ## Table of Contents
-  * [Introduction](#introduction)
-  * [Code Integrity](#code-integrity)
-  * [Get started](#get-started)
-  * [Working with Docker](#working-with-docker)
-  * [Traces](#traces)
-  * [Running your predictor](#running-your-predictor)
-  * [Implementing the predictors](#implementing-the-predictors)
-    - [Gshare](#gshare)
-    - [Tournament](#tournament)
-    - [Custom](#custom)
-    - [Things to note](#things-to-note)
-  * [Grading](#grading)
-    - [Grading the custom predictor](#grading-the-custom-predictor)
-  * [Turn-in Instructions](#turn-in-instructions)
+- [CSE240A Branch Predictor Project](#cse240a-branch-predictor-project)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Code Integrity](#code-integrity)
+  - [Get Started](#get-started)
+  - [Working with Docker](#working-with-docker)
+  - [Traces](#traces)
+  - [Running your predictor](#running-your-predictor)
+  - [Implementing the predictors](#implementing-the-predictors)
+      - [Gshare](#gshare)
+      - [Tournament](#tournament)
+      - [Custom](#custom)
+      - [Things to note](#things-to-note)
+  - [Grading](#grading)
+      - [Grading the custom predictor](#grading-the-custom-predictor)
+  - [Turn-in instructions](#turn-in-instructions)
 
 ## Introduction
 
@@ -121,7 +123,7 @@ being run are as follows:
 ```
 An example of running a gshare predictor with 10 bits of history would be:   
 
-`bunzip2 -kc ../traces/int1_bz2 | ./predictor --gshare:10`
+`bunzip2 -kc ../traces/int_1.bz2 | ./predictor --gshare:10`
 
 
 ## Implementing the predictors
