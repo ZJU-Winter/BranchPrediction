@@ -14,14 +14,9 @@ int pcIndexBits;  // Number of bits used for PC index
 int bpType;       // Branch Prediction Type
 int verbose;
 
-struct Predictor {
-    //Gshare data structures
-    uint32_t GHR; // global history register
-    uint32_t *patternTable;
+uint32_t GHR; // global history register
+uint32_t *gsharePatternTable;
 
-};
-
-struct Predictor predictor = { NOTTAKEN, NULL};
 
 uint32_t pow2(int num) {
     uint32_t rst = 1;
@@ -33,20 +28,18 @@ uint32_t pow2(int num) {
 
 void init_gshare() {
     printf("Start of init_gshare");
-    printf("before");
-    predictor.GHR = NOTTAKEN;
-    printf("HERE");
-    predictor.patternTable = (uint32_t*) malloc(pow2(ghistoryBits) * sizeof(uint32_t));
+    GHR = NOTTAKEN;
+    gsharePatternTable = (uint32_t*) malloc(pow2(ghistoryBits) * sizeof(uint32_t));
     for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
-        predictor.patternTable[i] = NOTTAKEN;
+        gsharePatternTable[i] = NOTTAKEN;
     }
     printf("End of init_gshare");
 }
 
 uint8_t make_prediction_gshare(uint32_t pc) {
     printf("Start of prediction_gshare");
-    uint32_t index = predictor.GHR ^ pc;
-    if (predictor.patternTable[index] == SN || predictor.patternTable[index] == WN) {
+    uint32_t index = GHR ^ pc;
+    if (gsharePatternTable[index] == SN || gsharePatternTable[index] == WN) {
         printf("End of prediction_gshare"); 
         return NOTTAKEN;
     }
@@ -68,20 +61,20 @@ void decrementPattern(uint32_t *pattern) {
 
 
 void train_predictor_gshare(uint32_t pc, uint8_t outcome) {
-    uint32_t index = predictor.GHR ^ pc;
+    uint32_t index = GHR ^ pc;
     if (outcome == TAKEN) {
-        printf("pattern before training: %d\n", predictor.patternTable[index]);
-        incrementPattern(&predictor.patternTable[index]);
-        printf("pattern after training: %d\n", predictor.patternTable[index]);
+        printf("pattern before training: %d\n", gsharePatternTable[index]);
+        incrementPattern(&gsharePatternTable[index]);
+        printf("pattern after training: %d\n", gsharePatternTable[index]);
     } else {
-        printf("pattern before training: %d\n", predictor.patternTable[index]);
-        decrementPattern(&predictor.patternTable[index]);
-        printf("pattern after training: %d\n", predictor.patternTable[index]);
+        printf("pattern before training: %d\n", gsharePatternTable[index]);
+        decrementPattern(&gsharePatternTable[index]);
+        printf("pattern after training: %d\n", gsharePatternTable[index]);
     }
 
-    printf("GHR before training: %d\n", predictor.GHR);
-    predictor.GHR = (predictor.GHR << 1) | outcome;
-    printf("GHR after training: %d\n", predictor.GHR);
+    printf("GHR before training: %d\n", GHR);
+    GHR = (GHR << 1) | outcome;
+    printf("GHR after training: %d\n", GHR);
 }
 
 void init_tournament() {
