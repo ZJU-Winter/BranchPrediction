@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include "predictor.h"
 #define DEBUG 0
+#define SG 0
+#define WG 1
+#define WT 2
+#define ST 3
+
 const char *studentName = "Wentao Huang";
 const char *studentID   = "A59019267";
 const char *email       = "weh019@ucsd.edu";
@@ -17,9 +22,12 @@ int verbose;
 
 //Gshare
 uint32_t GHR; // global history register
-uint32_t *gsharePatternTable;
+uint8_t *gsharePatternTable;
 
-
+//Tournament
+uint32_t *localHistroyTable;
+uint8_t *localPatternTable;
+uint8_t *selectionTable;
 
 uint32_t getMask(int length) {
     return ~(~0 << length);
@@ -34,20 +42,14 @@ uint32_t pow2(int num) {
 }
 
 void init_gshare() {
-    if (DEBUG) {
-        printf("Start of init_gshare\n");
-    }
     GHR = NOTTAKEN;
-    gsharePatternTable = (uint32_t*) malloc(pow2(ghistoryBits) * sizeof(uint32_t));
+    gsharePatternTable = (uint8_t*) malloc(pow2(ghistoryBits) * sizeof(uint8_t));
     for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
         gsharePatternTable[i] = NOTTAKEN;
     }
 }
 
 uint8_t make_prediction_gshare(uint32_t pc) {
-    if (DEBUG) {
-        printf("Start of prediction_gshare\n");
-    }
     uint32_t mask = getMask(ghistoryBits);
     uint32_t index = (GHR & mask) ^ (pc & mask);
 
@@ -57,18 +59,17 @@ uint8_t make_prediction_gshare(uint32_t pc) {
     return TAKEN;
 }
 
-void incrementPattern(uint32_t *pattern) {
+void incrementPattern(uint8_t *pattern) {
     if (*pattern == SN || *pattern == WN || *pattern == WT) {
         (*pattern) += 1;
     }
 }
 
-void decrementPattern(uint32_t *pattern) {
+void decrementPattern(uint8_t *pattern) {
     if (*pattern == WN || *pattern == WT || *pattern == ST) {
         (*pattern) -= 1;
     }
 }
-
 
 void train_predictor_gshare(uint32_t pc, uint8_t outcome) {
     uint32_t mask = getMask(ghistoryBits);
@@ -102,15 +103,69 @@ void train_predictor_gshare(uint32_t pc, uint8_t outcome) {
 }
 
 void init_tournament() {
+    GHR = NOTTAKEN;
+    gsharePatternTable = (uint8_t*) malloc(pow2(ghistoryBits) * sizeof(uint8_t));
+    for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
+        gsharePatternTable[i] = NOTTAKEN;
+    }
 
+    uint32_t length = pow2(pcIndexBits);
+    localHistroyTable = (uint32_t*) malloc(length * sizeof(uint32_t));
+    localPatternTable = (uint8_t*) malloc(pow2(lhistoryBits) * sizeof(uint8_t));
+    selectionTable = (uint8_t*) malloc(length * sizeof(uint8_t));
+    for (uint32_t i = 0; i < length; ++ i) {
+        localHistroyTable[i] = (uint32_t)0;
+        selectionTable[i] = SG;
+    }
+    for (uint32_t i = 0; i < pow2(lhistoryBits); ++ i) {
+        localPatternTable[i] = SN;
+    }
+}
+
+uint8_t make_prediction_local(uint32_t pc) {
+    uint32_t mask = getMask(pcIndexBits);
+    uint32_t pcIndex = pc & mask;
+    uint32_t history = localHistroyTable[pcIndex];
+    uint8_t tounamentPrediction = localPatternTable[history];
+    if (tounamentPrediction == SN || tounamentPrediction == WN) {
+        return NOTTAKEN;
+    }
+    return TAKEN;
 }
 
 uint8_t make_prediction_tournament(uint32_t pc) {
-    return NOTTAKEN;
+    uint8_t gsharePrediction = make_prediction_gshare(pc);
+    uint32_t mask = getMask(pcIndexBits);
+    uint32_t pcIndex = pc & mask;
+    if (selectionTable[pcIndex] == SG || selectionTable[pcIndex] == WG) {
+        return gsharePrediction;
+    }
+    return make_prediction_local(pc);
 }
 
 void train_predictor_tournament(uint32_t pc, uint8_t outcome) {
+    uint8_t gsharePrediction = make_prediction_gshare(pc);
+    uint8_t localPrediction = make_prediction_local(pc);
+    uint32_t mask = getMask(pcIndexBits);
+    uint32_t pcIndex = pc & mask;
+    if (gsharePrediction != localPrediction) {
+        //printf("update selection table.\n");
+        if (gsharePrediction == outcome) {
+            decrementPattern(&selectionTable[pcIndex]);
+        } else {
+            incrementPattern(&selectionTable[pcIndex]);
+        }
+    }
+    train_predictor_gshare(pc, outcome);
 
+    uint32_t historyIndex = localHistroyTable[pcIndex];
+    if (outcome == TAKEN) {
+        incrementPattern(&localPatternTable[historyIndex]);
+    } else {
+        decrementPattern(&localPatternTable[historyIndex]);
+    }
+    uint32_t historyMask = getMask(lhistoryBits);
+    localHistroyTable[pcIndex] = ((localHistroyTable[pcIndex] << 1) | outcome) & historyMask;
 }
 
 void init_predictor() {
@@ -132,7 +187,6 @@ void init_predictor() {
 // Make a prediction for conditional branch instruction at PC 'pc'
 // Returning TAKEN indicates a prediction of taken; returning NOTTAKEN
 // indicates a prediction of not taken
-//
 uint8_t make_prediction(uint32_t pc) {
   switch (bpType) {
     case STATIC:
@@ -148,7 +202,6 @@ uint8_t make_prediction(uint32_t pc) {
   }
   return NOTTAKEN;
 }
-
 
 void train_predictor(uint32_t pc, uint8_t outcome) {
   switch (bpType) {
