@@ -1,10 +1,21 @@
 #include <stdio.h>
 #include "predictor.h"
+
 #define DEBUG 0
 #define SG 0
 #define WG 1
-#define WT 2
-#define ST 3
+#define WL 2
+#define SL 3
+
+// Definitions for 3-bit counters
+#define N3  0			// predict NT
+#define N2  1			// predict NT
+#define N1  2			// predict NT
+#define N0  3			// predict NT
+#define T0  4			// predict T
+#define T1  5			// predict T
+#define T2  6			// predict T
+#define T3  7			// predict T
 
 const char *studentName = "Wentao Huang";
 const char *studentID   = "A59019267";
@@ -25,9 +36,12 @@ uint32_t GHR; // global history register
 uint8_t *gsharePatternTable;
 
 //Tournament
+uint32_t globalHistory;
+uint8_t *globalPatternTable;
 uint32_t *localHistroyTable;
 uint8_t *localPatternTable;
 uint8_t *selectionTable;
+
 
 uint32_t getMask(int length) {
     return ~(~0 << length);
@@ -71,6 +85,18 @@ void decrementPattern(uint8_t *pattern) {
     }
 }
 
+void incrementPattern3bits(uint8_t *pattern) {
+    if (*pattern != T3) {
+        (*pattern) += 1;
+    }
+}
+
+void decrementPattern3bits(uint8_t *pattern) {
+    if (*pattern != N3) {
+        (*pattern) -= 1;
+    }
+}
+
 void train_predictor_gshare(uint32_t pc, uint8_t outcome) {
     uint32_t mask = getMask(ghistoryBits);
     uint32_t index = (GHR & mask) ^ (pc & mask);
@@ -103,6 +129,90 @@ void train_predictor_gshare(uint32_t pc, uint8_t outcome) {
 }
 
 void init_tournament() {
+    globalHistory = NOTTAKEN;
+    globalPatternTable = (uint8_t*) malloc(pow2(ghistoryBits) * sizeof(uint8_t));
+    for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
+        globalPatternTable[i] = SN;
+    }
+
+    localHistroyTable = (uint32_t*) malloc(pow2(pcIndexBits) * sizeof(uint32_t));
+    for (uint32_t i = 0; i < pow2(pcIndexBits); ++ i) {
+        localHistroyTable[i] = (uint32_t)0;
+    }
+    localPatternTable = (uint8_t*) malloc(pow2(lhistoryBits) * sizeof(uint8_t));
+    for (uint32_t i = 0; i < pow2(lhistoryBits); ++ i) {
+        localPatternTable[i] = SN;
+    }
+    selectionTable = (uint8_t*) malloc(pow2(ghistoryBits) * sizeof(uint8_t));
+    for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
+        selectionTable[i] = SG;
+    }
+}
+
+uint8_t make_prediction_global(uint32_t pc) {
+    if (globalPatternTable[globalHistory] == SN || globalPatternTable[globalHistory] == WN) {
+        return NOTTAKEN;
+    }
+    return TAKEN;
+}
+
+void train_predictor_global(uint32_t pc, uint8_t outcome) {
+    uint32_t mask = getMask(ghistoryBits);
+    if (outcome == TAKEN) {
+        incrementPattern(&globalPatternTable[globalHistory]);
+    } else {
+        decrementPattern(&globalPatternTable[globalHistory]);
+    }
+    globalHistory = ((globalHistory << 1) | outcome) & mask;
+}
+
+uint8_t make_prediction_local(uint32_t pc) {
+    uint32_t mask = getMask(pcIndexBits);
+    uint32_t pcIndex = pc & mask;
+    uint32_t history = localHistroyTable[pcIndex];
+    uint8_t tounamentPrediction = localPatternTable[history];
+    if (tounamentPrediction == SN || tounamentPrediction == WN) {
+        return NOTTAKEN;
+    }
+    return TAKEN;
+}
+
+void train_predictor_local(uint32_t pc, uint8_t outcome) {
+    uint32_t mask = getMask(pcIndexBits);
+    uint32_t pcIndex = pc & mask;
+    uint32_t historyIndex = localHistroyTable[pcIndex];
+    if (outcome == TAKEN) {
+        incrementPattern(&localPatternTable[historyIndex]);
+    } else {
+        decrementPattern(&localPatternTable[historyIndex]);
+    }
+    uint32_t historyMask = getMask(lhistoryBits);
+    localHistroyTable[pcIndex] = ((localHistroyTable[pcIndex] << 1) | outcome) & historyMask;
+}
+
+uint8_t make_prediction_tournament(uint32_t pc) {
+    uint8_t globalPrediction = make_prediction_global(pc);
+    if (selectionTable[globalHistory] == SG || selectionTable[globalHistory] == WG) {
+        return globalPrediction;
+    }
+    return make_prediction_local(pc);
+}
+
+void train_predictor_tournament(uint32_t pc, uint8_t outcome) {
+    uint8_t globalPrediction = make_prediction_global(pc);
+    uint8_t localPrediction = make_prediction_local(pc);
+    if (globalPrediction != localPrediction) {
+        if (globalPrediction == outcome) {
+            decrementPattern(&selectionTable[globalHistory]);
+        } else {
+            incrementPattern(&selectionTable[globalHistory]);
+        }
+    }
+    train_predictor_global(pc, outcome);
+    train_predictor_local(pc, outcome);
+}
+
+void init_costum() {
     GHR = NOTTAKEN;
     gsharePatternTable = (uint8_t*) malloc(pow2(ghistoryBits) * sizeof(uint8_t));
     for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
@@ -122,18 +232,7 @@ void init_tournament() {
     }
 }
 
-uint8_t make_prediction_local(uint32_t pc) {
-    uint32_t mask = getMask(pcIndexBits);
-    uint32_t pcIndex = pc & mask;
-    uint32_t history = localHistroyTable[pcIndex];
-    uint8_t tounamentPrediction = localPatternTable[history];
-    if (tounamentPrediction == SN || tounamentPrediction == WN) {
-        return NOTTAKEN;
-    }
-    return TAKEN;
-}
-
-uint8_t make_prediction_tournament(uint32_t pc) {
+uint8_t make_prediction_costum(uint32_t pc) {
     uint8_t gsharePrediction = make_prediction_gshare(pc);
     uint32_t mask = getMask(pcIndexBits);
     uint32_t pcIndex = pc & mask;
@@ -143,13 +242,24 @@ uint8_t make_prediction_tournament(uint32_t pc) {
     return make_prediction_local(pc);
 }
 
-void train_predictor_tournament(uint32_t pc, uint8_t outcome) {
+// void train_predictor_gshare_3bits(uint32_t pc, uint8_t outcome) {
+//     uint32_t mask = getMask(ghistoryBits);
+//     uint32_t index = (GHR & mask) ^ (pc & mask);
+
+//     if (outcome == TAKEN) {
+//         incrementPattern3bits(&gsharePatternTable[index]);
+//     } else {
+//         decrementPattern3bits(&gsharePatternTable[index]);
+//     }
+//     GHR = ((GHR << 1) | outcome) & mask;
+// }
+
+void train_predictor_custom(uint32_t pc, uint8_t outcome) {
     uint8_t gsharePrediction = make_prediction_gshare(pc);
     uint8_t localPrediction = make_prediction_local(pc);
     uint32_t mask = getMask(pcIndexBits);
     uint32_t pcIndex = pc & mask;
     if (gsharePrediction != localPrediction) {
-        //printf("update selection table.\n");
         if (gsharePrediction == outcome) {
             decrementPattern(&selectionTable[pcIndex]);
         } else {
@@ -172,12 +282,13 @@ void init_predictor() {
     switch (bpType)
     {
     case GSHARE:
-        printf("Using Gshare predictor...\n");
         init_gshare();
         break;
     case TOURNAMENT:
-        printf("Using Tournament predictor...\n");
         init_tournament();
+        break;
+    case CUSTOM:
+        init_costum();
         break;
     default:
         break;
@@ -196,7 +307,7 @@ uint8_t make_prediction(uint32_t pc) {
     case TOURNAMENT:
         return make_prediction_tournament(pc);
     case CUSTOM:
-        return NOTTAKEN;
+        return make_prediction_costum(pc);
     default:
       break;
   }
@@ -212,6 +323,7 @@ void train_predictor(uint32_t pc, uint8_t outcome) {
         train_predictor_tournament(pc, outcome);
         break;
     case CUSTOM:
+        train_predictor_custom(pc, outcome);
         break;
     default:
       break;
