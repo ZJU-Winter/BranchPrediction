@@ -7,16 +7,6 @@
 #define WL 2
 #define SL 3
 
-// Definitions for 3-bit counters
-#define N3  0			// predict NT
-#define N2  1			// predict NT
-#define N1  2			// predict NT
-#define N0  3			// predict NT
-#define T0  4			// predict T
-#define T1  5			// predict T
-#define T2  6			// predict T
-#define T3  7			// predict T
-
 const char *studentName = "Wentao Huang";
 const char *studentID   = "A59019267";
 const char *email       = "weh019@ucsd.edu";
@@ -81,18 +71,6 @@ void incrementPattern(uint8_t *pattern) {
 
 void decrementPattern(uint8_t *pattern) {
     if (*pattern == WN || *pattern == WT || *pattern == ST) {
-        (*pattern) -= 1;
-    }
-}
-
-void incrementPattern3bits(uint8_t *pattern) {
-    if (*pattern != T3) {
-        (*pattern) += 1;
-    }
-}
-
-void decrementPattern3bits(uint8_t *pattern) {
-    if (*pattern != N3) {
         (*pattern) -= 1;
     }
 }
@@ -241,18 +219,6 @@ uint8_t make_prediction_costum(uint32_t pc) {
     }
     return make_prediction_local(pc);
 }
-
-// void train_predictor_gshare_3bits(uint32_t pc, uint8_t outcome) {
-//     uint32_t mask = getMask(ghistoryBits);
-//     uint32_t index = (GHR & mask) ^ (pc & mask);
-
-//     if (outcome == TAKEN) {
-//         incrementPattern3bits(&gsharePatternTable[index]);
-//     } else {
-//         decrementPattern3bits(&gsharePatternTable[index]);
-//     }
-//     GHR = ((GHR << 1) | outcome) & mask;
-// }
 
 void train_predictor_custom(uint32_t pc, uint8_t outcome) {
     uint8_t gsharePrediction = make_prediction_gshare(pc);
