@@ -1,5 +1,5 @@
 #! /bin/bash
-echo -e "Enter Predictor Type:\n1.Gshare\n2.Tournament\n3.Custom\n4.Run all"
+echo -e "Enter Predictor Type:\n1.Gshare\n2.Tournament\n3.Custom1\n4.Custom2\n5.Run all"
 read type
 if [ $type == "1" ]
 then
@@ -22,13 +22,22 @@ bunzip2 -kc ../traces/mm_2.bz2 | ./predictor --tournament:9:10:10
 elif [ $type == "3" ]
 then
 echo "running custom predictor..."
+bunzip2 -kc ../traces/fp_1.bz2 | ./predictor --custom:9:10:10
+bunzip2 -kc ../traces/fp_2.bz2 | ./predictor --custom:9:10:10
+bunzip2 -kc ../traces/int_1.bz2 | ./predictor --custom:9:10:10
+bunzip2 -kc ../traces/int_2.bz2 | ./predictor --custom:9:10:10
+bunzip2 -kc ../traces/mm_1.bz2 | ./predictor --custom:9:10:10
+bunzip2 -kc ../traces/mm_2.bz2 | ./predictor --custom:9:10:10
+elif [ $type == "4" ]
+then
+echo "running custom predictor..."
 bunzip2 -kc ../traces/fp_1.bz2 | ./predictor --custom:13:13:10
 bunzip2 -kc ../traces/fp_2.bz2 | ./predictor --custom:13:13:10
 bunzip2 -kc ../traces/int_1.bz2 | ./predictor --custom:13:13:10
 bunzip2 -kc ../traces/int_2.bz2 | ./predictor --custom:13:13:10
 bunzip2 -kc ../traces/mm_1.bz2 | ./predictor --custom:13:13:10
 bunzip2 -kc ../traces/mm_2.bz2 | ./predictor --custom:13:13:10
-elif [ $type == "4" ]
+elif [ $type == "5" ]
 then
 echo "running gshare predictor..."
 bunzip2 -kc ../traces/fp_1.bz2 | ./predictor --gshare:13
