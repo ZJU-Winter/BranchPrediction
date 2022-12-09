@@ -40,13 +40,13 @@ bunzip2 -kc ../traces/mm_2.bz2 | ./predictor --custom:13:13:10
 elif [ $type == "5" ]
 then
 echo "running preceptron predictor..."
-# bunzip2 -kc ../traces/fp_1.bz2 | ./predictor --preceptron
-# bunzip2 -kc ../traces/fp_2.bz2 | ./predictor --preceptron
-# bunzip2 -kc ../traces/int_1.bz2 | ./predictor --preceptron
-# bunzip2 -kc ../traces/int_2.bz2 | ./predictor --preceptron
-# bunzip2 -kc ../traces/mm_1.bz2 | ./predictor --preceptron
-# bunzip2 -kc ../traces/mm_2.bz2 | ./predictor --preceptron
-bunzip2 -kc ../traces/test.bz2 | ./predictor --preceptron
+bunzip2 -kc ../traces/fp_1.bz2 | ./predictor --preceptron
+bunzip2 -kc ../traces/fp_2.bz2 | ./predictor --preceptron
+bunzip2 -kc ../traces/int_1.bz2 | ./predictor --preceptron
+bunzip2 -kc ../traces/int_2.bz2 | ./predictor --preceptron
+bunzip2 -kc ../traces/mm_1.bz2 | ./predictor --preceptron
+bunzip2 -kc ../traces/mm_2.bz2 | ./predictor --preceptron
+#bunzip2 -kc ../traces/test.bz2 | ./predictor --preceptron
 elif [ $type == "6" ]
 then 
 echo "running gshare predictor..."
