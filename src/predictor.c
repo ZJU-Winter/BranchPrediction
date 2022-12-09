@@ -1,13 +1,16 @@
 #include <stdio.h>
+#include <math.h>
 #include "predictor.h"
 
 #define DEBUG 0
+#define N 13 // preceptron history length
+#define PCindex 8 // perceptron pc index for hashing
 #define SG 0
 #define WG 1
 #define WL 2
 #define SL 3
 
-const char *studentName = "Wentao Huang";
+const char *studentName = "Stevie Huang";
 const char *studentID   = "A59019267";
 const char *email       = "weh019@ucsd.edu";
 
@@ -31,6 +34,11 @@ uint8_t *globalPatternTable;
 uint32_t *localHistroyTable;
 uint8_t *localPatternTable;
 uint8_t *selectionTable;
+
+//Perceptron
+typedef int* preceptron;
+preceptron* ptable;
+int* pGlobalHistory;
 
 
 uint32_t getMask(int length) {
@@ -190,6 +198,60 @@ void train_predictor_tournament(uint32_t pc, uint8_t outcome) {
     train_predictor_local(pc, outcome);
 }
 
+void init_preceptron() {
+    ptable = (preceptron*) malloc(pow2(PCindex) * sizeof(preceptron));
+    for (int i = 0; i < pow2(PCindex); i += 1) {
+        ptable[i] = (preceptron) malloc((N + 1) * sizeof(int));
+        for (int j = 0; j <= N; j += 1) {
+            ptable[i][j] = 1;
+        }
+    }
+    pGlobalHistory = (int*) malloc((N + 1) * sizeof(int));
+    pGlobalHistory[0] = 1;
+    for (int i = 1; i <= N; i += 1) {
+        pGlobalHistory[i] = -1;
+    }
+}
+
+uint8_t getPrediction(int rst) {
+    if (rst <= 0) return NOTTAKEN;
+    return TAKEN;
+}
+
+uint8_t make_prediction_preceptron(uint32_t pc) {
+    uint32_t mask = getMask(PCindex);
+    uint32_t index = pc & mask;
+    preceptron p = ptable[index];
+    int rst = 0;
+    for (int i = 0; i <= N; i += 1) {
+        rst += (p[i] * pGlobalHistory[i]);
+    }
+    return getPrediction(rst);
+}
+
+void train_predictor_preceptron(uint32_t pc, uint8_t outcome) {
+    int t = outcome;
+    if (outcome == 0) {
+        t = -1;
+    }
+    uint32_t mask = getMask(PCindex);
+    uint32_t index = pc & mask;
+    preceptron p = ptable[index];
+    int rst = 0;
+    for (int i = 0; i <= N; i += 1) {
+        rst += (p[i] * pGlobalHistory[i]);
+    }
+    if (getPrediction(rst) != t || abs(rst) < 40) {
+        for (int i = 0; i <= N; i += 1) {
+            p[i] += t * pGlobalHistory[i];
+        }
+    }
+    for (int i = 2;i <= N; i += 1) {
+        pGlobalHistory[i] = pGlobalHistory[i - 1];
+    }
+    pGlobalHistory[1] = t;
+}
+
 void init_costum() {
     GHR = NOTTAKEN;
     gsharePatternTable = (uint8_t*) malloc(pow2(ghistoryBits) * sizeof(uint8_t));
@@ -254,7 +316,7 @@ void init_predictor() {
         init_tournament();
         break;
     case CUSTOM:
-        init_costum();
+        init_preceptron();
         break;
     default:
         break;
@@ -273,7 +335,7 @@ uint8_t make_prediction(uint32_t pc) {
     case TOURNAMENT:
         return make_prediction_tournament(pc);
     case CUSTOM:
-        return make_prediction_costum(pc);
+        return make_prediction_preceptron(pc);
     default:
       break;
   }
@@ -289,7 +351,7 @@ void train_predictor(uint32_t pc, uint8_t outcome) {
         train_predictor_tournament(pc, outcome);
         break;
     case CUSTOM:
-        train_predictor_custom(pc, outcome);
+        train_predictor_preceptron(pc, outcome);
         break;
     default:
       break;
