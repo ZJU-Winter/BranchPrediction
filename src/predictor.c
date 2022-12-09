@@ -3,8 +3,8 @@
 #include "predictor.h"
 
 #define DEBUG 0
-#define N 20 // preceptron history length
-#define PCindex 13 // perceptron pc index for hashing
+#define N 13 // preceptron history length
+#define PCindex 8 // perceptron pc index for hashing
 #define SG 0
 #define WG 1
 #define WL 2
@@ -203,7 +203,7 @@ void init_preceptron() {
     for (int i = 0; i < pow2(PCindex); i += 1) {
         ptable[i] = (preceptron) malloc((N + 1) * sizeof(int));
         for (int j = 0; j <= N; j += 1) {
-            ptable[i][j] = 1;
+            ptable[i][j] = 0;
         }
     }
     pGlobalHistory = (int*) malloc((N + 1) * sizeof(int));
@@ -226,6 +226,7 @@ uint8_t make_prediction_preceptron(uint32_t pc) {
     for (int i = 0; i <= N; i += 1) {
         rst += (p[i] * pGlobalHistory[i]);
     }
+    printf("rst: %d\n", rst);
     return getPrediction(rst);
 }
 
@@ -246,7 +247,7 @@ void train_predictor_preceptron(uint32_t pc, uint8_t outcome) {
             p[i] += t * pGlobalHistory[i];
         }
     }
-    for (int i = 2;i <= N; i += 1) {
+    for (int i = 2; i <= N; i += 1) {
         pGlobalHistory[i] = pGlobalHistory[i - 1];
     }
     pGlobalHistory[1] = t;
