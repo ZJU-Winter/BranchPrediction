@@ -226,7 +226,7 @@ uint8_t make_prediction_preceptron(uint32_t pc) {
     for (int i = 0; i <= N; i += 1) {
         rst += (p[i] * pGlobalHistory[i]);
     }
-    printf("rst: %d\n", rst);
+    //printf("rst: %d\n", rst);
     return getPrediction(rst);
 }
 
