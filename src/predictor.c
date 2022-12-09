@@ -242,7 +242,7 @@ void train_predictor_preceptron(uint32_t pc, uint8_t outcome) {
     for (int i = 0; i <= N; i += 1) {
         rst += (p[i] * pGlobalHistory[i]);
     }
-    if (getPrediction(rst) != t || abs(rst) < 40) {
+    if (getPrediction(rst) != t || abs(rst) <= 40) {
         for (int i = 0; i <= N; i += 1) {
             p[i] += t * pGlobalHistory[i];
         }
