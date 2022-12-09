@@ -252,7 +252,7 @@ void train_predictor_preceptron(uint32_t pc, uint8_t outcome) {
     pGlobalHistory[1] = t;
 }
 
-void init_costum() {
+void init_custom() {
     GHR = NOTTAKEN;
     gsharePatternTable = (uint8_t*) malloc(pow2(ghistoryBits) * sizeof(uint8_t));
     for (uint32_t i = 0; i < pow2(ghistoryBits); ++ i) {
@@ -272,7 +272,7 @@ void init_costum() {
     }
 }
 
-uint8_t make_prediction_costum(uint32_t pc) {
+uint8_t make_prediction_custom(uint32_t pc) {
     uint8_t gsharePrediction = make_prediction_gshare(pc);
     uint32_t mask = getMask(pcIndexBits);
     uint32_t pcIndex = pc & mask;
@@ -316,6 +316,9 @@ void init_predictor() {
         init_tournament();
         break;
     case CUSTOM:
+        init_custom();
+        break;
+    case PERCEPTRON:
         init_preceptron();
         break;
     default:
@@ -335,6 +338,8 @@ uint8_t make_prediction(uint32_t pc) {
     case TOURNAMENT:
         return make_prediction_tournament(pc);
     case CUSTOM:
+        return make_prediction_custom(pc);
+    case PERCEPTRON:
         return make_prediction_preceptron(pc);
     default:
       break;
@@ -351,6 +356,9 @@ void train_predictor(uint32_t pc, uint8_t outcome) {
         train_predictor_tournament(pc, outcome);
         break;
     case CUSTOM:
+        train_predictor_custom(pc, outcome);
+        break;
+    case PERCEPTRON:
         train_predictor_preceptron(pc, outcome);
         break;
     default:
