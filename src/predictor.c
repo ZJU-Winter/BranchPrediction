@@ -4,7 +4,6 @@
 
 #define DEBUG 0
 #define N 13 // preceptron history length
-#define PCindex 8 // perceptron pc index for hashing
 #define SG 0
 #define WG 1
 #define WL 2
@@ -38,7 +37,7 @@ uint8_t *selectionTable;
 //Perceptron
 typedef int* preceptron;
 preceptron* ptable;
-int* pGlobalHistory;
+uint32_t pGlobalHistory;
 
 
 uint32_t getMask(int length) {
@@ -199,18 +198,14 @@ void train_predictor_tournament(uint32_t pc, uint8_t outcome) {
 }
 
 void init_preceptron() {
-    ptable = (preceptron*) malloc(pow2(PCindex) * sizeof(preceptron));
-    for (int i = 0; i < pow2(PCindex); i += 1) {
+    ptable = (preceptron*) malloc(pow2(N) * sizeof(preceptron));
+    for (int i = 0; i < pow2(N); i += 1) {
         ptable[i] = (preceptron) malloc((N + 1) * sizeof(int));
         for (int j = 0; j <= N; j += 1) {
             ptable[i][j] = 0;
         }
     }
-    pGlobalHistory = (int*) malloc((N + 1) * sizeof(int));
-    pGlobalHistory[0] = 1;
-    for (int i = 1; i <= N; i += 1) {
-        pGlobalHistory[i] = -1;
-    }
+    pGlobalHistory = NOTTAKEN;
 }
 
 uint8_t getPrediction(int rst) {
@@ -219,21 +214,25 @@ uint8_t getPrediction(int rst) {
 }
 
 uint8_t make_prediction_preceptron(uint32_t pc) {
-    uint32_t mask = getMask(PCindex);
-    uint32_t index = pc & mask;
+    uint32_t mask = getMask(N);
+    uint32_t index = (pc & mask) ^ (pGlobalHistory & mask);
     preceptron p = ptable[index];
-    int rst = 0;
     printf("global history\n");
-    for (int i = 0; i <= N; i += 1) {
-        printf("%d ", pGlobalHistory[i]);
-    }
+    // for (int i = 0; i <= N; i += 1) {
+    //     printf("%d ", pGlobalHistory[i]);
+    // }
     printf("\nweights\n");
     for (int i = 0; i <= N; i += 1) {
         printf("%d ", p[i]);
     }
     printf("\n");
-    for (int i = 0; i <= N; i += 1) {
-        rst += (p[i] * pGlobalHistory[i]);
+    int rst = p[0];
+    for (int i = 1; i <= N; i += 1) {
+        int temp = pGlobalHistory << (i - 1);
+        if (temp == 0) {
+            temp = -1;
+        }
+        rst += (p[i] * temp);
     }
     printf("rst: %d\n", rst);
     return getPrediction(rst);
@@ -244,22 +243,28 @@ void train_predictor_preceptron(uint32_t pc, uint8_t outcome) {
     if (outcome == 0) {
         t = -1;
     }
-    uint32_t mask = getMask(PCindex);
-    uint32_t index = pc & mask;
+    uint32_t mask = getMask(N);
+    uint32_t index = (pc & mask) ^ (pGlobalHistory & mask);
     preceptron p = ptable[index];
-    int rst = 0;
-    for (int i = 0; i <= N; i += 1) {
-        rst += (p[i] * pGlobalHistory[i]);
+    int rst = p[0];
+    for (int i = 1; i <= N; i += 1) {
+        int temp = (pGlobalHistory << (i - 1));
+        if (temp == 0) {
+            temp = -1;
+        }
+        rst += (p[i] * temp);
     }
     if (getPrediction(rst) != t || abs(rst) <= 100) {
-        for (int i = 0; i <= N; i += 1) {
-            p[i] += t * pGlobalHistory[i];
+        p[0] += t;
+        for (int i = 1; i <= N; i += 1) {
+            int temp = (pGlobalHistory << (i - 1));
+            if (temp == 0) {
+                temp = -1;
+            }
+            p[i] += t * temp;
         }
     }
-    for (int i = 2; i <= N; i += 1) {
-        pGlobalHistory[i] = pGlobalHistory[i - 1];
-    }
-    pGlobalHistory[1] = t;
+    pGlobalHistory = ((pGlobalHistory << 1) | outcome) & mask;
 }
 
 void init_custom() {
