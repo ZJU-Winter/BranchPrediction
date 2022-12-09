@@ -217,18 +217,9 @@ uint8_t make_prediction_preceptron(uint32_t pc) {
     uint32_t mask = getMask(N);
     uint32_t index = (pc & mask) ^ (pGlobalHistory & mask);
     preceptron p = ptable[index];
-    // printf("global history\n");
-    // // for (int i = 0; i <= N; i += 1) {
-    // //     printf("%d ", pGlobalHistory[i]);
-    // // }
-    // printf("\nweights\n");
-    // for (int i = 0; i <= N; i += 1) {
-    //     printf("%d ", p[i]);
-    // }
-    // printf("\n");
     int rst = p[0];
     for (int i = 1; i <= N; i += 1) {
-        int temp = pGlobalHistory << (i - 1);
+        int temp = pGlobalHistory & (1 << (i - 1));
         if (temp == 0) {
             temp = -1;
         }
@@ -248,7 +239,7 @@ void train_predictor_preceptron(uint32_t pc, uint8_t outcome) {
     preceptron p = ptable[index];
     int rst = p[0];
     for (int i = 1; i <= N; i += 1) {
-        int temp = (pGlobalHistory << (i - 1));
+        int temp = (pGlobalHistory & (1 << (i - 1)));
         if (temp == 0) {
             temp = -1;
         }
