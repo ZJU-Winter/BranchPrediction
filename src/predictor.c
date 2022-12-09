@@ -3,7 +3,7 @@
 #include "predictor.h"
 
 #define DEBUG 0
-#define N 13 // preceptron history length
+#define N 12 // preceptron history length
 #define SG 0
 #define WG 1
 #define WL 2
