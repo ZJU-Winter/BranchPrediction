@@ -3,7 +3,7 @@
 #include "predictor.h"
 
 #define DEBUG 0
-#define N 32 // preceptron history length
+#define N 13 // preceptron history length
 #define SG 0
 #define WG 1
 #define WL 2
@@ -37,6 +37,7 @@ uint8_t *selectionTable;
 //Perceptron
 typedef int* preceptron;
 preceptron* ptable;
+int* historyTable;
 uint32_t pGlobalHistory;
 
 
@@ -206,6 +207,11 @@ void init_preceptron() {
         }
     }
     pGlobalHistory = NOTTAKEN;
+    historyTable = malloc((N + 1) * sizeof(int));
+    historyTable[0] = 1;
+    for (int i = 1; i <=N; i += 1) {
+        historyTable[i] = -1;
+    }
 }
 
 uint8_t getPrediction(int rst) {
@@ -217,13 +223,9 @@ uint8_t make_prediction_preceptron(uint32_t pc) {
     uint32_t mask = getMask(N);
     uint32_t index = (pc & mask) ^ (pGlobalHistory & mask);
     preceptron p = ptable[index];
-    int rst = p[0];
-    for (int i = 1; i <= N; i += 1) {
-        int temp = pGlobalHistory & (1 << (i - 1));
-        if (temp == 0) {
-            temp = -1;
-        }
-        rst += (p[i] * temp);
+    int rst = 0;
+    for (int i = 0; i <= N; i += 1) {
+        rst += (p[i] * historyTable[i]);
     }
     //printf("rst: %d\n", rst);
     return getPrediction(rst);
@@ -237,24 +239,19 @@ void train_predictor_preceptron(uint32_t pc, uint8_t outcome) {
     uint32_t mask = getMask(N);
     uint32_t index = (pc & mask) ^ (pGlobalHistory & mask);
     preceptron p = ptable[index];
-    int rst = p[0];
-    for (int i = 1; i <= N; i += 1) {
-        int temp = (pGlobalHistory & (1 << (i - 1)));
-        if (temp == 0) {
-            temp = -1;
-        }
-        rst += (p[i] * temp);
+    int rst = 0;
+    for (int i = 0; i <= N; i += 1) {
+        rst += (p[i] * historyTable[i]);
     }
-    if (getPrediction(rst) != t || abs(rst) <= 100) {
-        p[0] += t;
-        for (int i = 1; i <= N; i += 1) {
-            int temp = (pGlobalHistory << (i - 1));
-            if (temp == 0) {
-                temp = -1;
-            }
-            p[i] += t * temp;
+    if ((rst < 0) != (t < 0) || abs(rst) <= 40) {
+        for (int i = 0; i <= N; i += 1) {
+            p[i] += t * historyTable[i];
         }
     }
+    for (int i = 1; i < N; i += 1) {
+        historyTable[i] = historyTable[i + 1];
+    }
+    historyTable[N] = t;
     pGlobalHistory = ((pGlobalHistory << 1) | outcome) & mask;
 }
 
