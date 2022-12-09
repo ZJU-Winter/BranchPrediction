@@ -46,7 +46,7 @@ echo "running preceptron predictor..."
 # bunzip2 -kc ../traces/int_2.bz2 | ./predictor --preceptron
 # bunzip2 -kc ../traces/mm_1.bz2 | ./predictor --preceptron
 # bunzip2 -kc ../traces/mm_2.bz2 | ./predictor --preceptron
-./predictor --preceptron test.trace
+bunzip2 -kc ../traces/test.bz2 | ./predictor --preceptron
 elif [ $type == "6" ]
 then 
 echo "running gshare predictor..."
