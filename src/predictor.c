@@ -3,8 +3,8 @@
 #include "predictor.h"
 
 #define DEBUG 0
-#define N 13 // preceptron history length
-#define PCindex 8 // perceptron pc index for hashing
+#define N 20 // preceptron history length
+#define PCindex 13 // perceptron pc index for hashing
 #define SG 0
 #define WG 1
 #define WL 2
