@@ -3,7 +3,7 @@
 #include "predictor.h"
 
 #define DEBUG 0
-#define N 64 // preceptron history length
+#define N 13 // preceptron history length
 #define PCindex 8 // perceptron pc index for hashing
 #define SG 0
 #define WG 1
@@ -223,10 +223,19 @@ uint8_t make_prediction_preceptron(uint32_t pc) {
     uint32_t index = pc & mask;
     preceptron p = ptable[index];
     int rst = 0;
+    printf("global history\n");
+    for (int i = 0; i <= N; i += 1) {
+        printf("%d ", pGlobalHistory[i]);
+    }
+    printf("\nweights\n");
+    for (int i = 0; i <= N; i += 1) {
+        printf("%d ", p[i]);
+    }
+    printf("\n");
     for (int i = 0; i <= N; i += 1) {
         rst += (p[i] * pGlobalHistory[i]);
     }
-    //printf("rst: %d\n", rst);
+    printf("rst: %d\n", rst);
     return getPrediction(rst);
 }
 
